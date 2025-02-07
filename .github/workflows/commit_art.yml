@@ -1,37 +1,32 @@
-name: Auto Commit Art
+name: Auto Commit Generator
 
 on:
+  push:
+    branches:
+      - main
   schedule:
-    - cron: '0 12 * * *'  # Esegue ogni giorno a mezzogiorno UTC
-  workflow_dispatch:  # Permette di eseguire manualmente
+    - cron: '0 0 * * *'  # Esegui ogni giorno a mezzanotte
 
 jobs:
-  commit-art:
+  auto_commit:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repository
+      - name: Checkout Repository
         uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Setup Python
+      - name: Set Up Python
         uses: actions/setup-python@v3
         with:
-          python-version: '3.x'
+          python-version: "3.8"
 
-      - name: Install dependencies
+      - name: Install Git
+        run: sudo apt-get install git -y
+
+      - name: Execute Commit Script
         run: |
-          pip install numpy opencv-python matplotlib
-
-      - name: Run commit script
-        run: python script.py  # Modifica con il nome del tuo script Python
-
-      - name: Configure Git
-        run: |
-          git config --global user.name "GitHub Actions"
-          git config --global user.email "actions@github.com"
-
-      - name: Push changes
-        run: |
-          git add .
-          git commit -m "Automated commit"
+          git config --global user.name "GitHub Action Bot"
+          git config --global user.email "action@github.com"
+          python commit_script.py
           git push
