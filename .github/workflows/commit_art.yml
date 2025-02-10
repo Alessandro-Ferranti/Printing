@@ -5,28 +5,42 @@ on:
     branches:
       - main
   schedule:
-    - cron: '0 0 * * *'  # Esegui ogni giorno a mezzanotte
+    - cron: '0 0 * * *'  # Esegui ogni giorno a mezzanotte UTC
+  workflow_dispatch:  # Permette di eseguire manualmente il workflow
 
 jobs:
   auto_commit:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          persist-credentials: false  # Evita problemi di autenticazione
 
       - name: Set Up Python
         uses: actions/setup-python@v3
         with:
           python-version: "3.8"
 
-      - name: Install Git
-        run: sudo apt-get install git -y
+      - name: Install Dependencies
+        run: |
+          pip install numpy opencv-python matplotlib
 
-      - name: Execute Commit Script
+      - name: Set up Git authentication
         run: |
           git config --global user.name "GitHub Action Bot"
           git config --global user.email "action@github.com"
-          python commit_script.py
-          git push
+          git remote set-url origin https://x-access-token:${{ secrets.GH_PAT }}@github.com/${{ github.repository }}.git
+
+      - name: Execute Commit Script
+        run: python commit_script.py
+
+      - name: Pull latest changes
+        run: git pull origin main --rebase
+
+      - name: Push changes
+        run: |
+          git add .
+          git commit -m "Automated commit via GitHub Actions" || echo "No changes to commit"
+          git push origin main
